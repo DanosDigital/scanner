@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#141414">
   <title>Universal QR Scanner</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -104,6 +107,28 @@
       color: white;
       border: 1px solid #444;
     }
+    /* Mobile-specific styles */
+@media (max-width: 768px) {
+  #scanner-video {
+    height: 60vh;
+    object-position: center;
+  }
+  
+  .scan-frame {
+    width: 80%;
+    height: 180px;
+  }
+  
+  .btn {
+    padding: 15px;
+    font-size: 1.1rem;
+  }
+  
+  /* Prevent zooming on mobile */
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
   </style>
 </head>
 <body>
@@ -182,33 +207,61 @@
 
     // Start the scanner
     async function startScanner() {
-      if (scanningActive) return;
-      
-      try {
-        // Use selected camera or default
-        const constraints = {
-          video: {
-            facingMode: 'environment',
-            deviceId: currentCameraId ? { exact: currentCameraId } : undefined
-          }
-        };
+  if (scanningActive) return;
+  
+  try {
+    // Mobile-specific constraints
+    const constraints = {
+      video: {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        facingMode: 'environment',
+        deviceId: currentCameraId ? { exact: currentCameraId } : undefined,
+        frameRate: { ideal: 30 }
+      },
+      audio: false
+    };
 
-        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-        videoElement.srcObject = videoStream;
-        videoElement.play();
-        
-        scanBtn.style.display = 'none';
-        statusMessage.innerHTML = 'Scanning... Point camera at QR code';
-        scanningActive = true;
-        
-        // Start QR code detection
-        scanQRCode();
-      } catch (error) {
-        console.error('Camera error:', error);
-        statusMessage.innerHTML = `<span style="color: var(--primary)">Camera error: ${error.message}</span>`;
-        scanBtn.style.display = 'block';
-      }
+    // Additional mobile check
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      constraints.video.facingMode = { exact: 'environment' };
     }
+
+    videoStream = await navigator.mediaDevices.getUserMedia(constraints)
+      .catch(err => {
+        // Fallback for some Android devices
+        delete constraints.video.facingMode;
+        return navigator.mediaDevices.getUserMedia(constraints);
+      });
+
+    videoElement.srcObject = videoStream;
+    
+    // Mobile-specific video play handling
+    const playPromise = videoElement.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        // Fallback for autoplay restrictions
+        scanBtn.style.display = 'block';
+        scanBtn.textContent = 'Tap to Start Camera';
+      });
+    }
+    
+    scanningActive = true;
+    scanQRCode();
+    
+  } catch (error) {
+    console.error('Mobile camera error:', error);
+    statusMessage.innerHTML = `
+      <span style="color: var(--primary)">
+        <i class="fas fa-exclamation-triangle"></i> 
+        ${getMobileErrorMessage(error)}
+      </span>
+      <button onclick="showMobileInstructions()" style="margin-top: 10px;">
+        Show Device Instructions
+      </button>
+    `;
+  }
+}
 
     // Switch between cameras
     async function switchCamera() {
@@ -219,7 +272,52 @@
         startScanner();
       }
     }
+    function getMobileErrorMessage(error) {
+  if (error.name === 'NotAllowedError') {
+    return 'Camera access denied. Please enable permissions in browser settings.';
+  }
+  if (error.name === 'NotFoundError') {
+    return 'No camera found. This device may not have a rear camera.';
+  }
+  return `Camera error: ${error.message}`;
+}
 
+function showMobileInstructions() {
+  statusMessage.innerHTML = `
+    <h4>Mobile Setup Instructions:</h4>
+    <ol>
+      <li>Open in Chrome or Firefox</li>
+      <li>Allow camera permissions</li>
+      <li>Ensure good lighting</li>
+      <li>Hold steady 6-12 inches from QR code</li>
+      <li>Try different angles if not scanning</li>
+    </ol>
+    <button class="btn" onclick="startScanner()">
+      <i class="fas fa-camera"></i> Try Again
+    </button>
+  `;
+}
+// Add to your existing code
+function handleOrientationChange() {
+  if (!scanningActive) return;
+  
+  const video = document.getElementById('scanner-video');
+  const orientation = window.orientation;
+  
+  if (Math.abs(orientation) === 90) {
+    // Landscape mode
+    video.style.height = '60vh';
+    video.style.width = 'auto';
+  } else {
+    // Portrait mode
+    video.style.height = '70vh';
+    video.style.width = '100%';
+  }
+}
+
+// Set up event listeners
+window.addEventListener('orientationchange', handleOrientationChange);
+window.addEventListener('resize', handleOrientationChange);
     // Stop the scanner
     function stopScanner() {
       if (animationFrameId) {
