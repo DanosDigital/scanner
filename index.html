@@ -2,388 +2,625 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#141414">
-  <title>Universal QR Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineBook - Ticket Scanner</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
   <style>
     :root {
       --primary: #e50914;
+      --primary-dark: #b2070f;
+      --secondary: #e5b50a;
       --dark: #141414;
+      --dark-gray: #222;
+      --medium-gray: #444;
+      --light-gray: #777;
       --light: #f4f4f4;
+      --white: #ffffff;
     }
 
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', sans-serif;
     }
 
     body {
       background-color: var(--dark);
       color: var(--light);
       min-height: 100vh;
-      overflow: hidden;
     }
 
-    .scanner-container {
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header Styles */
+    header {
       display: flex;
-      flex-direction: column;
-      height: 100vh;
-      padding: 15px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background-color: rgba(0, 0, 0, 0.9);
+      position: fixed;
+      width: 100%;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .logo {
+      color: var(--primary);
+      font-size: 1.8rem;
+      font-weight: bold;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo i {
+      font-size: 1.6rem;
+    }
+
+    /* Button Styles */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none !important;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      border: 2px solid var(--primary);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      border-color: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background-color: var(--secondary);
+      color: var(--dark);
+    }
+
+    .btn-secondary:hover {
+      background-color: #d1a309;
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--light);
+      color: var(--light);
+    }
+
+    .btn-outline:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .btn-sm {
+      padding: 8px 15px;
+      font-size: 0.9rem;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .modal-content {
+      background-color: var(--dark);
+      margin: 50px auto;
+      max-width: 900px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+      animation: modalFadeIn 0.3s;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+      padding: 20px;
+      background-color: var(--dark-gray);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--medium-gray);
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      color: var(--light);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .close-modal:hover {
+      color: var(--primary);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    /* Scanner styles */
+    #scanner-container {
+      position: relative;
+      width: 100%;
+      height: 400px;
+      background-color: black;
+      margin: 0 auto;
+      overflow: hidden;
     }
 
     #scanner-video {
       width: 100%;
-      height: 70vh;
+      height: 100%;
       object-fit: cover;
-      border-radius: 8px;
-      background-color: black;
     }
 
-    /* Hide all video controls in all browsers */
-    #scanner-video::-webkit-media-controls {
-      display: none !important;
-    }
-    #scanner-video::-webkit-media-controls-enclosure {
-      display: none !important;
-    }
-    #scanner-video::-webkit-media-controls-panel {
-      display: none !important;
-    }
-    #scanner-video::-webkit-media-controls-play-button {
-      display: none !important;
-    }
-    #scanner-video::-webkit-media-controls-start-playback-button {
-      display: none !important;
+    #scanner-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 4px solid var(--primary);
+      box-sizing: border-box;
+      pointer-events: none;
     }
 
-    .scan-frame {
+    .scanner-guide {
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
       width: 70%;
-      height: 200px;
-      border: 4px solid var(--primary);
-      border-radius: 8px;
-      z-index: 10;
-      pointer-events: none;
-      box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.7);
-    }
-
-    .scanner-header {
-      text-align: center;
-      padding: 15px;
-      margin-bottom: 15px;
-    }
-
-    .status-message {
-      text-align: center;
-      padding: 15px;
-      margin-top: 10px;
-    }
-
-    .btn {
-      padding: 12px;
-      border: none;
-      border-radius: 4px;
+      height: 2px;
       background-color: var(--primary);
-      color: white;
-      font-weight: bold;
-      width: 100%;
-      margin-top: 15px;
+      transform: translate(-50%, -50%);
+      animation: scannerPulse 2s infinite;
     }
 
-    .camera-selector {
-      margin-top: 10px;
-      width: 100%;
-      padding: 8px;
-      border-radius: 4px;
-      background-color: #222;
-      color: white;
-      border: 1px solid #444;
+    @keyframes scannerPulse {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
     }
-    /* Mobile-specific styles */
-@media (max-width: 768px) {
-  #scanner-video {
-    height: 60vh;
-    object-position: center;
-  }
-  
-  .scan-frame {
-    width: 80%;
-    height: 180px;
-  }
-  
-  .btn {
-    padding: 15px;
-    font-size: 1.1rem;
-  }
-  
-  /* Prevent zooming on mobile */
-  input, select, textarea {
-    font-size: 16px;
-  }
-}
+
+    #scanner-result {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .confirmation-details {
+      background-color: var(--dark-gray);
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: left;
+      border-left: 4px solid var(--primary);
+    }
+
+    .detail {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--medium-gray);
+    }
+
+    .detail:last-child {
+      border-bottom: none;
+    }
+
+    .detail-value {
+      color: var(--light);
+      font-weight: 500;
+    }
+
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: var(--light-gray);
+      gap: 10px;
+    }
+
+    .loading i {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    #scanner-error {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .error-icon {
+      font-size: 2rem;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    /* Toast notifications */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 4px;
+      color: white;
+      font-weight: 500;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    .toast-success {
+      background-color: #4CAF50;
+    }
+
+    .toast-error {
+      background-color: #F44336;
+    }
+
+    .toast-info {
+      background-color: #2196F3;
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+      .modal-content {
+        margin: 20px;
+      }
+
+      #scanner-container {
+        height: 300px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .modal-content {
+        margin: 10px;
+      }
+
+      #scanner-container {
+        height: 250px;
+      }
+
+      .modal-header h2 {
+        font-size: 1.3rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="scanner-container">
-    <div class="scanner-header">
-      <h2><i class="fas fa-qrcode"></i> QR Code Scanner</h2>
-      <select id="camera-select" class="camera-selector" onchange="switchCamera()">
-        <option value="">Select Camera</option>
-      </select>
-    </div>
-
-    <div style="position: relative;">
-      <video id="scanner-video" playsinline autoplay muted></video>
-      <div class="scan-frame"></div>
-    </div>
-
-    <div id="status-message" class="status-message">
-      Initializing scanner...
-    </div>
-
-    <button id="scan-btn" class="btn" onclick="startScanner()" style="display: none;">
-      <i class="fas fa-camera"></i> Start Scanner
+  <!-- Header -->
+  <header>
+    <a href="#" class="logo">
+      <i class="fas fa-film"></i>
+      <span>CineBook</span>
+    </a>
+    <button class="btn btn-secondary btn-sm" onclick="window.location.href='cinebook5.html'">
+      <i class="fas fa-arrow-left"></i> Back to Booking
     </button>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container" style="padding-top: 80px;">
+    <h1 style="margin-bottom: 20px;">Ticket Scanner</h1>
+    <p style="margin-bottom: 30px; color: var(--light-gray);">
+      Use this scanner to verify tickets at the cinema entrance. Point the camera at the QR code on the ticket.
+    </p>
+    
+    <button class="btn btn-primary btn-lg" onclick="showScannerModal()">
+      <i class="fas fa-qrcode"></i> Open Ticket Scanner
+    </button>
+  </main>
+
+  <!-- Scanner Modal -->
+  <div class="modal" id="scannerModal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2>Ticket Scanner</h2>
+        <button class="close-modal" onclick="closeScannerModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="scanner-container">
+          <video id="scanner-video"></video>
+          <div class="scanner-guide"></div>
+        </div>
+        <div id="scanner-result">
+          <h3>Ticket Verified</h3>
+          <div id="scanned-booking-details" class="confirmation-details">
+            <!-- Booking details will be displayed here -->
+          </div>
+          <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="resetScanner()">
+            <i class="fas fa-sync-alt"></i> Scan Another Ticket
+          </button>
+        </div>
+        <div id="scanner-loading">
+          <div class="loading">
+            <i class="fas fa-spinner"></i> Initializing scanner...
+          </div>
+        </div>
+        <div id="scanner-error">
+          <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <p id="scanner-error-message" style="margin-bottom: 20px;"></p>
+          <button class="btn btn-outline" onclick="initScanner()">
+            <i class="fas fa-redo"></i> Try Again
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Using jsQR library which works better cross-browser -->
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-  
   <script>
-    // Global variables
-    let videoStream = null;
-    let currentCameraId = null;
-    let cameras = [];
-    let scanningActive = false;
-    let animationFrameId = null;
-
-    // DOM elements
-    const videoElement = document.getElementById('scanner-video');
-    const cameraSelect = document.getElementById('camera-select');
-    const statusMessage = document.getElementById('status-message');
-    const scanBtn = document.getElementById('scan-btn');
-
-    // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-      // Opera-specific fixes
-      if (window.opera || navigator.userAgent.includes('Opera')) {
-        videoElement.controls = false;
-        videoElement.removeAttribute('controls');
-      }
-      
-      scanBtn.style.display = 'block';
-      enumerateCameras();
-    });
-
-    // Get available cameras
-    async function enumerateCameras() {
-      try {
-        cameras = await navigator.mediaDevices.enumerateDevices();
-        cameras = cameras.filter(device => device.kind === 'videoinput');
-        
-        cameraSelect.innerHTML = '<option value="">Select Camera</option>';
-        cameras.forEach((camera, index) => {
-          cameraSelect.innerHTML += `<option value="${camera.deviceId}">Camera ${index + 1}</option>`;
-        });
-        
-        if (cameras.length > 0) {
-          statusMessage.innerHTML = 'Ready to scan. Select a camera or click "Start Scanner"';
-        } else {
-          statusMessage.innerHTML = '<span style="color: var(--primary)">No cameras found</span>';
-        }
-      } catch (error) {
-        console.error('Camera enumeration error:', error);
-        statusMessage.innerHTML = `<span style="color: var(--primary)">Error: ${error.message}</span>`;
-      }
-    }
-
-    // Start the scanner
-    async function startScanner() {
-  if (scanningActive) return;
-  
-  try {
-    // Mobile-specific constraints
-    const constraints = {
-      video: {
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-        facingMode: 'environment',
-        deviceId: currentCameraId ? { exact: currentCameraId } : undefined,
-        frameRate: { ideal: 30 }
-      },
-      audio: false
+    // Firebase configuration - REPLACE WITH YOUR CONFIG
+    const firebaseConfig = {
+      apiKey: "AIzaSyDI9Zinr-244vpVqnhvWCGYRibEkI8Akcw",
+      authDomain: "cinebook-1a011.firebaseapp.com",
+      databaseURL: "https://cinebook-1a011-default-rtdb.firebaseio.com",
+      projectId: "cinebook-1a011",
+      storageBucket: "cinebook-1a011.appspot.com",
+      messagingSenderId: "95353759074",
+      appId: "1:95353759074:web:dfd6e3d7e4b76b1538783b"
     };
 
-    // Additional mobile check
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      constraints.video.facingMode = { exact: 'environment' };
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const bookingsRef = db.collection("bookings");
+
+    // Scanner variables
+    let scanner = null;
+    let scannerActive = false;
+
+    // Show scanner modal
+    function showScannerModal() {
+      document.getElementById('scannerModal').style.display = 'block';
+      document.getElementById('scanner-result').style.display = 'none';
+      document.getElementById('scanner-error').style.display = 'none';
+      document.getElementById('scanner-loading').style.display = 'block';
+      
+      // Initialize the scanner
+      initScanner();
     }
 
-    videoStream = await navigator.mediaDevices.getUserMedia(constraints)
-      .catch(err => {
-        // Fallback for some Android devices
-        delete constraints.video.facingMode;
-        return navigator.mediaDevices.getUserMedia(constraints);
-      });
-
-    videoElement.srcObject = videoStream;
-    
-    // Mobile-specific video play handling
-    const playPromise = videoElement.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(err => {
-        // Fallback for autoplay restrictions
-        scanBtn.style.display = 'block';
-        scanBtn.textContent = 'Tap to Start Camera';
-      });
+    // Close scanner modal
+    function closeScannerModal() {
+      stopScanner();
+      document.getElementById('scannerModal').style.display = 'none';
     }
-    
-    scanningActive = true;
-    scanQRCode();
-    
-  } catch (error) {
-    console.error('Mobile camera error:', error);
-    statusMessage.innerHTML = `
-      <span style="color: var(--primary)">
-        <i class="fas fa-exclamation-triangle"></i> 
-        ${getMobileErrorMessage(error)}
-      </span>
-      <button onclick="showMobileInstructions()" style="margin-top: 10px;">
-        Show Device Instructions
-      </button>
-    `;
-  }
-}
 
-    // Switch between cameras
-    async function switchCamera() {
-      currentCameraId = cameraSelect.value;
-      if (scanningActive) {
-        stopScanner();
-        await new Promise(resolve => setTimeout(resolve, 500));
-        startScanner();
+    // Initialize the QR scanner
+    function initScanner() {
+      document.getElementById('scanner-error').style.display = 'none';
+      document.getElementById('scanner-loading').style.display = 'block';
+      document.getElementById('scanner-result').style.display = 'none';
+      
+      // Check if scanner is already active
+      if (scannerActive) return;
+      
+      const video = document.getElementById('scanner-video');
+      
+      // Use the Instascan library
+      if (typeof Instascan !== 'undefined') {
+        scanner = new Instascan.Scanner({ 
+          video: video,
+          mirror: false,
+          backgroundScan: false,
+          refractoryPeriod: 5000,
+          scanPeriod: 1
+        });
+        
+        scanner.addListener('scan', function(content) {
+          handleScannedCode(content);
+        });
+        
+        Instascan.Camera.getCameras().then(function(cameras) {
+          document.getElementById('scanner-loading').style.display = 'none';
+          
+          if (cameras.length > 0) {
+            scannerActive = true;
+            // Prefer rear camera if available
+            const rearCamera = cameras.find(c => c.name.toLowerCase().includes('back')) || cameras[0];
+            scanner.start(rearCamera);
+          } else {
+            showScannerError('No cameras found. Please ensure you have a camera connected and permissions are granted.');
+          }
+        }).catch(function(err) {
+          showScannerError('Camera access error: ' + err);
+        });
+      } else {
+        // Fallback if Instascan is not loaded
+        showScannerError('QR scanner library not loaded. Please try refreshing the page.');
       }
     }
-    function getMobileErrorMessage(error) {
-  if (error.name === 'NotAllowedError') {
-    return 'Camera access denied. Please enable permissions in browser settings.';
-  }
-  if (error.name === 'NotFoundError') {
-    return 'No camera found. This device may not have a rear camera.';
-  }
-  return `Camera error: ${error.message}`;
-}
 
-function showMobileInstructions() {
-  statusMessage.innerHTML = `
-    <h4>Mobile Setup Instructions:</h4>
-    <ol>
-      <li>Open in Chrome or Firefox</li>
-      <li>Allow camera permissions</li>
-      <li>Ensure good lighting</li>
-      <li>Hold steady 6-12 inches from QR code</li>
-      <li>Try different angles if not scanning</li>
-    </ol>
-    <button class="btn" onclick="startScanner()">
-      <i class="fas fa-camera"></i> Try Again
-    </button>
-  `;
-}
-// Add to your existing code
-function handleOrientationChange() {
-  if (!scanningActive) return;
-  
-  const video = document.getElementById('scanner-video');
-  const orientation = window.orientation;
-  
-  if (Math.abs(orientation) === 90) {
-    // Landscape mode
-    video.style.height = '60vh';
-    video.style.width = 'auto';
-  } else {
-    // Portrait mode
-    video.style.height = '70vh';
-    video.style.width = '100%';
-  }
-}
-
-// Set up event listeners
-window.addEventListener('orientationchange', handleOrientationChange);
-window.addEventListener('resize', handleOrientationChange);
     // Stop the scanner
     function stopScanner() {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-      }
-      
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-        videoStream = null;
-      }
-      
-      videoElement.srcObject = null;
-      scanningActive = false;
-      scanBtn.style.display = 'block';
-    }
-
-    // QR Code scanning function
-    function scanQRCode() {
-      if (!scanningActive) return;
-      
-      // Create canvas for image processing
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      canvas.width = videoElement.videoWidth;
-      canvas.height = videoElement.videoHeight;
-      
-      context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      
-      // Detect QR code
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: 'dontInvert',
-      });
-      
-      if (code) {
-        handleScanResult(code.data);
-      } else {
-        animationFrameId = requestAnimationFrame(scanQRCode);
+      if (scanner) {
+        scanner.stop();
+        scannerActive = false;
       }
     }
 
-    // Handle scan results
-    function handleScanResult(content) {
+    // Show scanner error
+    function showScannerError(message) {
+      document.getElementById('scanner-loading').style.display = 'none';
+      document.getElementById('scanner-error').style.display = 'block';
+      document.getElementById('scanner-error-message').textContent = message;
+    }
+
+    // Handle scanned QR code
+    async function handleScannedCode(content) {
+      // Stop the scanner
       stopScanner();
-      statusMessage.innerHTML = `<span style="color: #4CAF50">Scanned: ${content}</span>`;
       
-      // For CineBook system - extract booking ID
-      const bookingId = content.includes('BOOKING-') 
-        ? content.split('BOOKING-')[1] 
-        : content;
-      
-      console.log('Booking ID:', bookingId);
-      
-      // Here you would typically validate with your backend
-      // For now, just show a restart button
-      scanBtn.innerHTML = '<i class="fas fa-redo"></i> Scan Another';
-      scanBtn.style.display = 'block';
+      // Check if the content is a booking ID (starts with BOOKING-)
+      if (content.startsWith('BOOKING-')) {
+        const bookingId = content.substring(8); // Remove 'BOOKING-' prefix
+        
+        try {
+          // Show loading state while fetching booking details
+          document.getElementById('scanner-loading').style.display = 'block';
+          document.getElementById('scanner-error').style.display = 'none';
+          
+          // Fetch booking details from Firestore
+          const bookingDoc = await bookingsRef.doc(bookingId).get();
+          
+          document.getElementById('scanner-loading').style.display = 'none';
+          
+          if (bookingDoc.exists) {
+            const bookingData = bookingDoc.data();
+            displayBookingDetails(bookingData, bookingId);
+            
+            // Show success toast
+            showToast('Ticket verified successfully!', 'success');
+          } else {
+            showScannerError('Booking not found. Please check the ticket and try again.');
+            showToast('Invalid ticket QR code', 'error');
+          }
+        } catch (error) {
+          document.getElementById('scanner-loading').style.display = 'none';
+          showScannerError('Error fetching booking details: ' + error.message);
+          showToast('Error verifying ticket', 'error');
+        }
+      } else {
+        showScannerError('Invalid ticket QR code. Please scan a valid cinema ticket.');
+        showToast('Invalid QR code format', 'error');
+      }
     }
 
-    // Handle page visibility changes
-    document.addEventListener('visibilitychange', function() {
-      if (document.hidden) {
-        stopScanner();
+    // Display booking details
+    function displayBookingDetails(bookingData, bookingId) {
+      const detailsContainer = document.getElementById('scanned-booking-details');
+      
+      detailsContainer.innerHTML = `
+        <div class="detail">
+          <span>Booking ID:</span>
+          <span class="detail-value">${bookingId}</span>
+        </div>
+        <div class="detail">
+          <span>Movie:</span>
+          <span class="detail-value">${bookingData.movieTitle || 'N/A'}</span>
+        </div>
+        <div class="detail">
+          <span>Date & Time:</span>
+          <span class="detail-value">${formatDisplayDate(bookingData.date)}, ${bookingData.time || 'N/A'}</span>
+        </div>
+        <div class="detail">
+          <span>Theater:</span>
+          <span class="detail-value">${bookingData.theater || 'N/A'}</span>
+        </div>
+        <div class="detail">
+          <span>Seats:</span>
+          <span class="detail-value">${bookingData.seats ? bookingData.seats.map(seat => seat.number).join(', ') : 'N/A'}</span>
+        </div>
+        <div class="detail">
+          <span>Status:</span>
+          <span class="detail-value" style="color: ${bookingData.status === 'confirmed' ? 'var(--secondary)' : 'var(--primary)'}">
+            ${(bookingData.status || 'unknown').toUpperCase()}
+          </span>
+        </div>
+        <div class="detail">
+          <span>Scanned At:</span>
+          <span class="detail-value">${new Date().toLocaleString()}</span>
+        </div>
+      `;
+      
+      document.getElementById('scanner-result').style.display = 'block';
+    }
+
+    // Format date for display
+    function formatDisplayDate(dateStr) {
+      if (!dateStr) return 'N/A';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    }
+
+    // Reset scanner to scan another ticket
+    function resetScanner() {
+      document.getElementById('scanner-result').style.display = 'none';
+      initScanner();
+    }
+
+    // Show toast notification
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 300);
+      }, 3000);
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+      if (event.target.classList.contains('modal')) {
+        closeScannerModal();
       }
     });
+
+    // Initialize scanner when page loads (optional)
+    // document.addEventListener('DOMContentLoaded', function() {
+    //   showScannerModal();
+    // });
   </script>
 </body>
 </html>
