@@ -529,44 +529,49 @@
     }
 
     // Handle scanned QR code
-    async function handleScannedCode(content) {
-      // Stop the scanner
-      stopScanner();
+   async function handleScannedCode(content) {
+  // Stop the scanner
+  stopScanner();
 
-      // Check if the content is a booking ID (starts with BOOKING-)
-      if (content.startsWith('BOOKING-')) {
-        const bookingId = content.substring(8); // Remove 'BOOKING-' prefix
+  let bookingId = '';
+  
+  // Check for either format
+  if (content.startsWith('BOOKING-')) {
+    bookingId = content.substring(8); // Remove 'BOOKING-' prefix
+  } 
+  else if (content.startsWith('BookingID:')) {
+    bookingId = content.substring(10); // Remove 'BookingID:' prefix
+  }
+  else {
+    showScannerError('Invalid ticket QR code. Please scan a valid cinema ticket.');
+    showToast('Invalid QR code format', 'error');
+    return;
+  }
 
-        try {
-          // Show loading state while fetching booking details
-          document.getElementById('scanner-loading').style.display = 'block';
-          document.getElementById('scanner-error').style.display = 'none';
+  try {
+    // Show loading state while fetching booking details
+    document.getElementById('scanner-loading').style.display = 'block';
+    document.getElementById('scanner-error').style.display = 'none';
 
-          // Fetch booking details from Firestore
-          const bookingDoc = await bookingsRef.doc(bookingId).get();
+    // Fetch booking details from Firestore
+    const bookingDoc = await bookingsRef.doc(bookingId).get();
 
-          document.getElementById('scanner-loading').style.display = 'none';
+    document.getElementById('scanner-loading').style.display = 'none';
 
-          if (bookingDoc.exists) {
-            const bookingData = bookingDoc.data();
-            displayBookingDetails(bookingData, bookingId);
-
-            // Show success toast
-            showToast('Ticket verified successfully!', 'success');
-          } else {
-            showScannerError('Booking not found. Please check the ticket and try again.');
-            showToast('Invalid ticket QR code', 'error');
-          }
-        } catch (error) {
-          document.getElementById('scanner-loading').style.display = 'none';
-          showScannerError('Error fetching booking details: ' + error.message);
-          showToast('Error verifying ticket', 'error');
-        }
-      } else {
-        showScannerError('Invalid ticket QR code. Please scan a valid cinema ticket.');
-        showToast('Invalid QR code format', 'error');
-      }
+    if (bookingDoc.exists) {
+      const bookingData = bookingDoc.data();
+      displayBookingDetails(bookingData, bookingId);
+      showToast('Ticket verified successfully!', 'success');
+    } else {
+      showScannerError('Booking not found. Please check the ticket and try again.');
+      showToast('Invalid ticket QR code', 'error');
     }
+  } catch (error) {
+    document.getElementById('scanner-loading').style.display = 'none';
+    showScannerError('Error fetching booking details: ' + error.message);
+    showToast('Error verifying ticket', 'error');
+  }
+}
 
     // Display booking details
     function displayBookingDetails(bookingData, bookingId) {
