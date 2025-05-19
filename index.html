@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
   <style>
     :root {
       --primary: #e50914;
@@ -144,8 +147,15 @@
     }
 
     @keyframes modalFadeIn {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .modal-header {
@@ -214,9 +224,17 @@
     }
 
     @keyframes scannerPulse {
-      0% { opacity: 0.3; }
-      50% { opacity: 1; }
-      100% { opacity: 0.3; }
+      0% {
+        opacity: 0.3;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.3;
+      }
     }
 
     #scanner-result {
@@ -264,8 +282,13 @@
     }
 
     @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     #scanner-error {
@@ -337,6 +360,7 @@
     }
   </style>
 </head>
+
 <body>
   <!-- Header -->
   <header>
@@ -355,7 +379,7 @@
     <p style="margin-bottom: 30px; color: var(--light-gray);">
       Use this scanner to verify tickets at the cinema entrance. Point the camera at the QR code on the ticket.
     </p>
-    
+
     <button class="btn btn-primary btn-lg" onclick="showScannerModal()">
       <i class="fas fa-qrcode"></i> Open Ticket Scanner
     </button>
@@ -399,6 +423,8 @@
       </div>
     </div>
   </div>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
   <script>
     // Firebase configuration - REPLACE WITH YOUR CONFIG
@@ -427,7 +453,7 @@
       document.getElementById('scanner-result').style.display = 'none';
       document.getElementById('scanner-error').style.display = 'none';
       document.getElementById('scanner-loading').style.display = 'block';
-      
+
       // Initialize the scanner
       initScanner();
     }
@@ -440,32 +466,36 @@
 
     // Initialize the QR scanner
     function initScanner() {
+      if (typeof Instascan === 'undefined') {
+        showScannerError('Scanner library not loaded. Please refresh the page.');
+        return;
+      }
       document.getElementById('scanner-error').style.display = 'none';
       document.getElementById('scanner-loading').style.display = 'block';
       document.getElementById('scanner-result').style.display = 'none';
-      
+
       // Check if scanner is already active
       if (scannerActive) return;
-      
+
       const video = document.getElementById('scanner-video');
-      
+
       // Use the Instascan library
       if (typeof Instascan !== 'undefined') {
-        scanner = new Instascan.Scanner({ 
+        scanner = new Instascan.Scanner({
           video: video,
           mirror: false,
           backgroundScan: false,
           refractoryPeriod: 5000,
           scanPeriod: 1
         });
-        
-        scanner.addListener('scan', function(content) {
+
+        scanner.addListener('scan', function (content) {
           handleScannedCode(content);
         });
-        
-        Instascan.Camera.getCameras().then(function(cameras) {
+
+        Instascan.Camera.getCameras().then(function (cameras) {
           document.getElementById('scanner-loading').style.display = 'none';
-          
+
           if (cameras.length > 0) {
             scannerActive = true;
             // Prefer rear camera if available
@@ -474,7 +504,7 @@
           } else {
             showScannerError('No cameras found. Please ensure you have a camera connected and permissions are granted.');
           }
-        }).catch(function(err) {
+        }).catch(function (err) {
           showScannerError('Camera access error: ' + err);
         });
       } else {
@@ -502,25 +532,25 @@
     async function handleScannedCode(content) {
       // Stop the scanner
       stopScanner();
-      
+
       // Check if the content is a booking ID (starts with BOOKING-)
       if (content.startsWith('BOOKING-')) {
         const bookingId = content.substring(8); // Remove 'BOOKING-' prefix
-        
+
         try {
           // Show loading state while fetching booking details
           document.getElementById('scanner-loading').style.display = 'block';
           document.getElementById('scanner-error').style.display = 'none';
-          
+
           // Fetch booking details from Firestore
           const bookingDoc = await bookingsRef.doc(bookingId).get();
-          
+
           document.getElementById('scanner-loading').style.display = 'none';
-          
+
           if (bookingDoc.exists) {
             const bookingData = bookingDoc.data();
             displayBookingDetails(bookingData, bookingId);
-            
+
             // Show success toast
             showToast('Ticket verified successfully!', 'success');
           } else {
@@ -541,7 +571,7 @@
     // Display booking details
     function displayBookingDetails(bookingData, bookingId) {
       const detailsContainer = document.getElementById('scanned-booking-details');
-      
+
       detailsContainer.innerHTML = `
         <div class="detail">
           <span>Booking ID:</span>
@@ -574,8 +604,10 @@
           <span class="detail-value">${new Date().toLocaleString()}</span>
         </div>
       `;
-      
+
       document.getElementById('scanner-result').style.display = 'block';
+      document.getElementById('scanner-loading').style.display = 'none';
+      document.getElementById('scanner-error').style.display = 'none';
     }
 
     // Format date for display
@@ -611,16 +643,18 @@
     }
 
     // Close modal when clicking outside
-    window.addEventListener('click', function(event) {
+    window.addEventListener('click', function (event) {
       if (event.target.classList.contains('modal')) {
         closeScannerModal();
       }
     });
 
     // Initialize scanner when page loads (optional)
+    
     // document.addEventListener('DOMContentLoaded', function() {
     //   showScannerModal();
     // });
   </script>
 </body>
+
 </html>
