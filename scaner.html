@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.json">
+  <title>CineBook Staff Scanner</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #e50914;
+      --dark: #141414;
+      --light: #f4f4f4;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--dark);
+      color: var(--light);
+      min-height: 100vh;
+    }
+
+    .scanner-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 15px;
+    }
+
+    .scanner-header {
+      text-align: center;
+      padding: 15px;
+      background-color: rgba(0, 0, 0, 0.7);
+      margin-bottom: 15px;
+      border-radius: 8px;
+    }
+
+    #scanner-video {
+      width: 100%;
+      height: 60vh;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .scan-frame {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 70%;
+      height: 200px;
+      border: 4px solid var(--primary);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .scan-result {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: auto;
+      display: none;
+    }
+
+    .booking-detail {
+      margin-bottom: 8px;
+    }
+
+    .btn {
+      padding: 12px;
+      border: none;
+      border-radius: 4px;
+      background-color: var(--primary);
+      color: white;
+      font-weight: bold;
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .valid {
+      background-color: #4CAF50;
+    }
+
+    .invalid {
+      background-color: #F44336;
+    }
+
+    .auth-screen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px;
+      height: 100vh;
+    }
+
+    .auth-form {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background-color: #222;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Authentication Screen (shown first) -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-form">
+      <h2 style="text-align: center; margin-bottom: 20px;">Staff Login</h2>
+      <div class="form-group">
+        <label for="staffEmail">Email</label>
+        <input type="email" id="staffEmail" placeholder="staff@cinebook.com">
+      </div>
+      <div class="form-group">
+        <label for="staffPassword">Password</label>
+        <input type="password" id="staffPassword" placeholder="Enter password">
+      </div>
+      <button class="btn" onclick="staffLogin()">
+        <i class="fas fa-sign-in-alt"></i> Login
+      </button>
+    </div>
+  </div>
+
+  <!-- Scanner Screen (shown after login) -->
+  <div id="scannerScreen" class="scanner-container" style="display: none;">
+    <div class="scanner-header">
+      <h2><i class="fas fa-qrcode"></i> Ticket Scanner</h2>
+    </div>
+
+    <div style="position: relative;">
+      <video id="scanner-video" playsinline></video>
+      <div class="scan-frame"></div>
+    </div>
+
+    <div id="scanResult" class="scan-result">
+      <h3 style="margin-bottom: 10px;">Booking Information</h3>
+      <div class="booking-detail"><strong>Movie:</strong> <span id="scanMovie"></span></div>
+      <div class="booking-detail"><strong>Showtime:</strong> <span id="scanShowtime"></span></div>
+      <div class="booking-detail"><strong>Theater:</strong> <span id="scanTheater"></span></div>
+      <div class="booking-detail"><strong>Seats:</strong> <span id="scanSeats"></span></div>
+      <div class="booking-detail"><strong>Status:</strong> <span id="scanStatus" class="status-badge"></span></div>
+
+      <button id="validateBtn" class="btn" onclick="validateTicket()">
+        <i class="fas fa-check-circle"></i> Validate Ticket
+      </button>
+
+      <button class="btn" onclick="resetScanner()" style="background-color: #444; margin-top: 10px;">
+        <i class="fas fa-redo"></i> Scan Another
+      </button>
+    </div>
+  </div>
+
+  <!-- Include required libraries -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/instascan/1.0.0/instascan.min.js"></script>
+
+  <script>
+    // Firebase configuration (use your actual config)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDI9Zinr-244vpVqnhvWCGYRibEkI8Akcw",
+      authDomain: "cinebook-1a011.firebaseapp.com",
+      databaseURL: "https://cinebook-1a011-default-rtdb.firebaseio.com",
+      projectId: "cinebook-1a011",
+      storageBucket: "cinebook-1a011.firebasestorage.app",
+      messagingSenderId: "95353759074",
+      appId: "1:95353759074:web:dfd6e3d7e4b76b1538783b"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let scanner = null;
+    let currentBookingId = null;
+
+    // Staff login function
+    async function staffLogin() {
+      const email = document.getElementById('staffEmail').value;
+      const password = document.getElementById('staffPassword').value;
+
+      if (!email || !password) {
+        showToast('Please enter both email and password', 'error');
+        return;
+      }
+
+      try {
+        // Show loading state
+        const loginBtn = document.querySelector('#authScreen .btn');
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+        loginBtn.disabled = true;
+
+        // Sign in with Firebase Auth
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+
+        // Check staff status in Firestore
+        const staffDoc = await db.collection('staff').doc(userCredential.user.uid).get();
+
+        if (!staffDoc.exists || !staffDoc.data().active) {
+          await auth.signOut();
+          throw new Error('Not authorized as staff');
+        }
+
+        // Successful login - switch to scanner
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('scannerScreen').style.display = 'flex';
+        initScanner();
+
+      } catch (error) {
+        let errorMessage = error.message;
+
+        // More specific error messages
+        if (error.code === 'auth/user-not-found') {
+          errorMessage = 'No staff account found with this email';
+        } else if (error.code === 'auth/wrong-password') {
+          errorMessage = 'Incorrect password';
+        } else if (error.message.includes('Not authorized')) {
+          errorMessage = 'This account is not authorized for staff access';
+        }
+
+        showToast(errorMessage, 'error');
+
+        // Reset login button
+        const loginBtn = document.querySelector('#authScreen .btn');
+        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+        loginBtn.disabled = false;
+      }
+    }
+
+    // Initialize QR scanner
+    function initScanner() {
+      Instascan.Camera.getCameras().then(function (cameras) {
+        if (cameras.length > 0) {
+          scanner = new Instascan.Scanner({
+            video: document.getElementById('scanner-video'),
+            mirror: false,
+            backgroundScan: true
+          });
+
+          scanner.addListener('scan', function (content) {
+            // Stop scanning temporarily
+            scanner.stop();
+
+            // Extract booking ID (format: "BOOKING-ABC123")
+            const bookingId = content.split('BOOKING-')[1];
+            if (bookingId) {
+              currentBookingId = bookingId;
+              fetchBookingDetails(bookingId);
+            } else {
+              showResultError('Invalid QR code format');
+            }
+          });
+
+          // Start with back camera by default
+          scanner.start(cameras[cameras.length > 1 ? 1 : 0]);
+
+        } else {
+          alert('No cameras found. Please check permissions.');
+        }
+      }).catch(function (e) {
+        alert('Camera error: ' + e.message);
+      });
+    }
+
+    // Fetch booking details from Firestore
+    async function fetchBookingDetails(bookingId) {
+      try {
+        const bookingDoc = await db.collection('bookings').doc(bookingId).get();
+
+        if (!bookingDoc.exists) {
+          showResultError('Booking not found');
+          return;
+        }
+
+        const booking = bookingDoc.data();
+        showBookingResult(booking);
+
+      } catch (error) {
+        showResultError('Error loading booking: ' + error.message);
+      }
+    }
+
+    // Display booking information
+    function showBookingResult(booking) {
+      document.getElementById('scanMovie').textContent = booking.movieTitle;
+      document.getElementById('scanShowtime').textContent =
+        `${formatDate(booking.date)} at ${booking.time}`;
+      document.getElementById('scanTheater').textContent = booking.theater;
+      document.getElementById('scanSeats').textContent =
+        booking.seats.map(s => s.number).join(', ');
+
+      const statusElement = document.getElementById('scanStatus');
+      statusElement.textContent = booking.status === 'confirmed' ? 'Valid' : 'Used';
+      statusElement.className = `status-badge ${booking.status === 'confirmed' ? 'valid' : 'invalid'}`;
+
+      document.getElementById('validateBtn').style.display =
+        booking.status === 'confirmed' ? 'block' : 'none';
+
+      document.getElementById('scanResult').style.display = 'block';
+    }
+
+    // Show error message
+    function showResultError(message) {
+      document.getElementById('scanResult').innerHTML = `
+        <div style="color: var(--primary); text-align: center; padding: 20px;">
+          <i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i>
+          <p>${message}</p>
+        </div>
+        <button class="btn" onclick="resetScanner()" style="background-color: #444; margin-top: 20px;">
+          <i class="fas fa-redo"></i> Try Again
+        </button>
+      `;
+      document.getElementById('scanResult').style.display = 'block';
+    }
+
+    // Validate ticket (mark as used)
+    async function validateTicket() {
+      if (!currentBookingId) return;
+
+      try {
+        await db.collection('bookings').doc(currentBookingId).update({
+          status: 'used',
+          validatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          validatedBy: auth.currentUser.uid
+        });
+
+        alert('Ticket validated successfully!');
+        resetScanner();
+
+      } catch (error) {
+        alert('Validation failed: ' + error.message);
+      }
+    }
+
+    // Reset scanner to scan another ticket
+    function resetScanner() {
+      document.getElementById('scanResult').style.display = 'none';
+      if (scanner) {
+        scanner.start();
+      }
+    }
+
+    // Helper function to format date
+    function formatDate(dateStr) {
+      const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+      return new Date(dateStr).toLocaleDateString('en-US', options);
+    }
+
+    // Auto-focus password field on mobile
+    document.getElementById('staffPassword').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        staffLogin();
+      }
+    });
+  </script>
+</body>
+
+</html>
