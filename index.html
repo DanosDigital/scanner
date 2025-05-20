@@ -537,16 +537,18 @@
   
   // Check for either format
   if (content.startsWith('BOOKING-')) {
-    bookingId = content.substring(8); // Remove 'BOOKING-' prefix
-  } 
-  else if (content.startsWith('BookingID:')) {
-    bookingId = content.substring(10); // Remove 'BookingID:' prefix
-  }
-  else {
-    showScannerError('Invalid ticket QR code. Please scan a valid cinema ticket.');
-    showToast('Invalid QR code format', 'error');
-    return;
-  }
+  bookingId = content.substring(8);
+} else if (content.startsWith('BookingID:')) {
+  bookingId = content.substring(10);
+} else if (/^[a-zA-Z0-9]+$/.test(content)) {
+  // Accept raw alphanumeric ID
+  bookingId = content;
+} else {
+  showScannerError('Invalid ticket QR code. Please scan a valid cinema ticket.');
+  showToast('Invalid QR code format', 'error');
+  return;
+}
+
 
   try {
     // Show loading state while fetching booking details
