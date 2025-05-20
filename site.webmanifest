@@ -65,7 +65,7 @@
   "protocol_handlers": [
     {
       "protocol": "web+cinebook",
-      "url": "/https://danosdigital.github.io/scanner/l"
+      "url": "/https://danosdigital.github.io/scanner/"
     }
   ]
 }
