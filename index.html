@@ -34,18 +34,26 @@
       background-color: var(--dark);
       color: var(--light);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
     }
 
     /* Header Styles */
     header {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
       padding: 15px 20px;
       background-color: rgba(0, 0, 0, 0.9);
@@ -71,9 +79,9 @@
 
     /* Button Styles */
     .btn {
-      padding: 10px 20px;
+      padding: 12px 24px;
       border: none;
-      border-radius: 4px;
+      border-radius: 30px;
       cursor: pointer;
       font-weight: 600;
       transition: all 0.3s;
@@ -89,27 +97,31 @@
       background-color: var(--primary);
       color: white;
       border: 2px solid var(--primary);
+      box-shadow: 0 4px 15px rgba(229, 11, 20, 0.3);
     }
 
     .btn-primary:hover {
       background-color: var(--primary-dark);
       transform: translateY(-2px);
       border-color: var(--primary-dark);
+      box-shadow: 0 6px 20px rgba(229, 11, 20, 0.4);
     }
 
     .btn-secondary {
       background-color: var(--secondary);
       color: var(--dark);
+      box-shadow: 0 4px 15px rgba(229, 181, 10, 0.3);
     }
 
     .btn-secondary:hover {
       background-color: #d1a309;
       transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(229, 181, 10, 0.4);
     }
 
     .btn-outline {
       background-color: transparent;
-      border: 1px solid var(--light);
+      border: 2px solid var(--light);
       color: var(--light);
     }
 
@@ -118,9 +130,15 @@
       transform: translateY(-2px);
     }
 
-    .btn-sm {
-      padding: 8px 15px;
-      font-size: 0.9rem;
+    /* Scanner Card */
+    .scanner-card {
+      background-color: var(--dark-gray);
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      margin-top: 30px;
     }
 
     /* Modal Styles */
@@ -131,18 +149,18 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.8);
+      background-color: rgba(0, 0, 0, 0.9);
       z-index: 1000;
       overflow-y: auto;
     }
 
     .modal-content {
-      background-color: var(--dark);
+      background-color: var(--dark-gray);
       margin: 50px auto;
-      max-width: 900px;
-      border-radius: 8px;
+      max-width: 600px;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
       animation: modalFadeIn 0.3s;
     }
 
@@ -192,6 +210,7 @@
       background-color: black;
       margin: 0 auto;
       overflow: hidden;
+      border-radius: 12px;
     }
 
     #scanner-video {
@@ -210,6 +229,7 @@
       border: 4px solid var(--primary);
       box-sizing: border-box;
       pointer-events: none;
+      border-radius: 8px;
     }
 
     .scanner-guide {
@@ -236,16 +256,16 @@
         opacity: 0.3;
       }
     }
-
+    
     #scanner-result {
       display: none;
       margin-top: 20px;
     }
 
     .confirmation-details {
-      background-color: var(--dark-gray);
+      background-color: var(--dark);
       padding: 20px;
-      border-radius: 8px;
+      border-radius: 12px;
       margin: 20px 0;
       text-align: left;
       border-left: 4px solid var(--primary);
@@ -310,12 +330,13 @@
       left: 50%;
       transform: translateX(-50%);
       padding: 12px 24px;
-      border-radius: 4px;
+      border-radius: 30px;
       color: white;
       font-weight: 500;
       z-index: 1000;
       opacity: 0;
       transition: opacity 0.3s;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
     .toast.show {
@@ -332,6 +353,13 @@
 
     .toast-info {
       background-color: #2196F3;
+    }
+
+    /* Scanner instructions */
+    .scanner-instructions {
+      margin-top: 20px;
+      color: var(--light-gray);
+      font-size: 0.9rem;
     }
 
     /* Responsive Styles */
@@ -357,6 +385,10 @@
       .modal-header h2 {
         font-size: 1.3rem;
       }
+      
+      .scanner-card {
+        padding: 20px;
+      }
     }
   </style>
 </head>
@@ -368,26 +400,29 @@
       <i class="fas fa-film"></i>
       <span>CineBook</span>
     </a>
-    <button class="btn btn-secondary btn-sm" onclick="window.location.href='cinebook5.html'">
-      <i class="fas fa-arrow-left"></i> Back to Booking
-    </button>
   </header>
 
   <!-- Main Content -->
-  <main class="container" style="padding-top: 80px;">
-    <h1 style="margin-bottom: 20px;">Ticket Scanner</h1>
-    <p style="margin-bottom: 30px; color: var(--light-gray);">
-      Use this scanner to verify tickets at the cinema entrance. Point the camera at the QR code on the ticket.
-    </p>
+  <main class="container">
+    <div class="scanner-card">
+      <h1 style="margin-bottom: 20px;">Ticket Scanner</h1>
+      <p style="margin-bottom: 30px; color: var(--light-gray);">
+        Scan QR codes from movie tickets to verify their validity.
+      </p>
 
-    <button class="btn btn-primary btn-lg" onclick="showScannerModal()">
-      <i class="fas fa-qrcode"></i> Open Ticket Scanner
-    </button>
+      <button class="btn btn-primary btn-lg" onclick="showScannerModal()">
+        <i class="fas fa-qrcode"></i> Open Scanner
+      </button>
+      
+      <div class="scanner-instructions">
+        <p><i class="fas fa-lightbulb"></i> Point your camera at the QR code to scan</p>
+      </div>
+    </div>
   </main>
 
   <!-- Scanner Modal -->
   <div class="modal" id="scannerModal">
-    <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-content">
       <div class="modal-header">
         <h2>Ticket Scanner</h2>
         <button class="close-modal" onclick="closeScannerModal()">&times;</button>
@@ -427,7 +462,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
   <script>
-    // Firebase configuration - REPLACE WITH YOUR CONFIG
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDI9Zinr-244vpVqnhvWCGYRibEkI8Akcw",
       authDomain: "cinebook-1a011.firebaseapp.com",
@@ -529,51 +564,50 @@
     }
 
     // Handle scanned QR code
-   async function handleScannedCode(content) {
-  // Stop the scanner
-  stopScanner();
+    async function handleScannedCode(content) {
+      // Stop the scanner
+      stopScanner();
 
-  let bookingId = '';
-  
-  // Check for either format
-  if (content.startsWith('BOOKING-')) {
-  bookingId = content.substring(8);
-} else if (content.startsWith('BookingID:')) {
-  bookingId = content.substring(10);
-} else if (/^[a-zA-Z0-9]+$/.test(content)) {
-  // Accept raw alphanumeric ID
-  bookingId = content;
-} else {
-  showScannerError('Invalid ticket QR code. Please scan a valid cinema ticket.');
-  showToast('Invalid QR code format', 'error');
-  return;
-}
+      let bookingId = '';
+      
+      // Check for either format
+      if (content.startsWith('BOOKING-')) {
+        bookingId = content.substring(8);
+      } else if (content.startsWith('BookingID:')) {
+        bookingId = content.substring(10);
+      } else if (/^[a-zA-Z0-9]+$/.test(content)) {
+        // Accept raw alphanumeric ID
+        bookingId = content;
+      } else {
+        showScannerError('Invalid ticket QR code. Please scan a valid cinema ticket.');
+        showToast('Invalid QR code format', 'error');
+        return;
+      }
 
+      try {
+        // Show loading state while fetching booking details
+        document.getElementById('scanner-loading').style.display = 'block';
+        document.getElementById('scanner-error').style.display = 'none';
 
-  try {
-    // Show loading state while fetching booking details
-    document.getElementById('scanner-loading').style.display = 'block';
-    document.getElementById('scanner-error').style.display = 'none';
+        // Fetch booking details from Firestore
+        const bookingDoc = await bookingsRef.doc(bookingId).get();
 
-    // Fetch booking details from Firestore
-    const bookingDoc = await bookingsRef.doc(bookingId).get();
+        document.getElementById('scanner-loading').style.display = 'none';
 
-    document.getElementById('scanner-loading').style.display = 'none';
-
-    if (bookingDoc.exists) {
-      const bookingData = bookingDoc.data();
-      displayBookingDetails(bookingData, bookingId);
-      showToast('Ticket verified successfully!', 'success');
-    } else {
-      showScannerError('Booking not found. Please check the ticket and try again.');
-      showToast('Invalid ticket QR code', 'error');
+        if (bookingDoc.exists) {
+          const bookingData = bookingDoc.data();
+          displayBookingDetails(bookingData, bookingId);
+          showToast('Ticket verified successfully!', 'success');
+        } else {
+          showScannerError('Booking not found. Please check the ticket and try again.');
+          showToast('Invalid ticket QR code', 'error');
+        }
+      } catch (error) {
+        document.getElementById('scanner-loading').style.display = 'none';
+        showScannerError('Error fetching booking details: ' + error.message);
+        showToast('Error verifying ticket', 'error');
+      }
     }
-  } catch (error) {
-    document.getElementById('scanner-loading').style.display = 'none';
-    showScannerError('Error fetching booking details: ' + error.message);
-    showToast('Error verifying ticket', 'error');
-  }
-}
 
     // Display booking details
     function displayBookingDetails(bookingData, bookingId) {
@@ -655,12 +689,6 @@
         closeScannerModal();
       }
     });
-
-    // Initialize scanner when page loads (optional)
-    
-    // document.addEventListener('DOMContentLoaded', function() {
-    //   showScannerModal();
-    // });
   </script>
 </body>
 
