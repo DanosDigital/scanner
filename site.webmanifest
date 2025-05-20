@@ -1,7 +1,7 @@
 {
   "name": "CineBook Scanner",
   "short_name": "CineBook",
-  "start_url": "/hhtps://https://danosdigital.github.io/scanner/",
+  "start_url": "/https://danosdigital.github.io/scanner/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#141414",
@@ -51,7 +51,7 @@
       "name": "Scan Ticket",
       "short_name": "Scan",
       "description": "Open the ticket scanner",
-      "url": "/https://danosdigital.github.io/scanner/scanner.html",
+      "url": "/https://danosdigital.github.io/scanner/",
       "icons": [
         {
           "src": "/icons/scan-shortcut.png",
