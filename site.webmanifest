@@ -1,32 +1,29 @@
 {
   "name": "CineBook Scanner",
   "short_name": "CineBook",
-  "start_url": "/https://danosdigital.github.io/scanner/",
-  "scope": "/",
+  "start_url": "https://danosdigital.github.io/scanner/",
+  "scope": "https://danosdigital.github.io/scanner/",
   "display": "standalone",
   "background_color": "#141414",
   "theme_color": "#e50914",
-  "description": "Professional movie ticket scanning solution for cinemas",
+  "description": "Professional movie ticket scanning PWA",
   "orientation": "portrait-primary",
-  "categories": [
-    "entertainment",
-    "productivity"
-  ],
+  "categories": ["entertainment", "productivity"],
   "icons": [
     {
-      "src": "/icons/android-chrome-192x192.png",
+      "src": "https://danosdigital.github.io/scanner/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/android-chrome-512x512.png",
+      "src": "https://danosdigital.github.io/scanner/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/splash-640x1136.png",
+      "src": "https://danosdigital.github.io/scanner/icons/splash-640x1136.png",
       "sizes": "640x1136",
       "type": "image/png",
       "purpose": "splash"
@@ -34,38 +31,33 @@
   ],
   "screenshots": [
     {
-      "src": "/screenshots/scanner-1.png",
+      "src": "https://danosdigital.github.io/scanner/screenshots/scanner-mobile.png",
       "sizes": "1080x1920",
       "type": "image/png",
-      "label": "Ticket Scanner Interface"
-    },
-    {
-      "src": "/screenshots/result-1.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "label": "Ticket Verification Result"
+      "label": "Mobile Scanner Interface"
     }
   ],
   "shortcuts": [
     {
       "name": "Scan Ticket",
       "short_name": "Scan",
-      "description": "Open the ticket scanner",
-      "url": "/https://danosdigital.github.io/scanner/",
-      "icons": [
-        {
-          "src": "/icons/scan-shortcut.png",
-          "sizes": "96x96"
-        }
-      ]
+      "description": "Launch QR Code Scanner",
+      "url": "https://danosdigital.github.io/scanner/",
+      "icons": [{
+        "src": "https://danosdigital.github.io/scanner/icons/scan-shortcut.png",
+        "sizes": "96x96"
+      }]
     }
   ],
   "prefer_related_applications": false,
-  "related_applications": [],
   "protocol_handlers": [
     {
       "protocol": "web+cinebook",
-      "url": "/https://danosdigital.github.io/scanner/"
+      "url": "https://danosdigital.github.io/scanner/?ticket=%s"
     }
-  ]
+  ],
+  "display_override": ["window-controls-overlay"],
+  "edge_side_panel": {
+    "preferred_width": 360
+  }
 }
